@@ -1,4 +1,4 @@
-package com.aurora.aurora_was.entity;
+package com.aurora.aurora_was.welcome.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

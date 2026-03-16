@@ -1,7 +1,7 @@
-package com.aurora.aurora_was.controller;
+package com.aurora.aurora_was.welcome.controller;
 
-import com.aurora.aurora_was.entity.Welcome;
-import com.aurora.aurora_was.repository.WelcomeRepository;
+import com.aurora.aurora_was.welcome.entity.Welcome;
+import com.aurora.aurora_was.welcome.repository.WelcomeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

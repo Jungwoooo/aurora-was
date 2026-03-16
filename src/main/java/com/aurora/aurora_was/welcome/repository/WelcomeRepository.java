@@ -1,10 +1,9 @@
-package com.aurora.aurora_was.repository;
+package com.aurora.aurora_was.welcome.repository;
 
-import com.aurora.aurora_was.entity.Welcome;
+import com.aurora.aurora_was.welcome.entity.Welcome;
 import org.springframework.stereotype.Repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 @Repository
 public interface WelcomeRepository extends JpaRepository<Welcome, Long> {

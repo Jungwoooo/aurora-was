@@ -1,14 +1,14 @@
 package com.aurora.aurora_was.member.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity // 💡 "Spring아, 이 클래스 보고 MySQL에 테이블 좀 만들어줘!" 라는 마법의 주문
 @Getter
+@SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 숨기기 (안전성 UP)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Member {
 
     @Id // 기본키 (PK)
@@ -31,12 +31,12 @@ public class Member {
     private String role;
 
     // 💡 처음 회원가입 할 때 쓸 조립 설명서 (Builder)
-    @Builder
-    public Member(String email, String password, String name, String phone, String role) {
-        this.email = email;
-        this.password = password;
-        this.name = name;
-        this.phone = phone;
-        this.role = role;
-    }
+//    @Builder
+//    public Member(String email, String password, String name, String phone, String role) {
+//        this.email = email;
+//        this.password = password;
+//        this.name = name;
+//        this.phone = phone;
+//        this.role = role;
+//    }
 }
