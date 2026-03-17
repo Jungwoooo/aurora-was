@@ -1,7 +1,7 @@
 package com.aurora.aurora_was.lesson.service;
 
-import com.aurora.aurora_was.lesson.dto.req.CreateLessonReq;
-import com.aurora.aurora_was.lesson.dto.req.SearchLessonReq;
+import com.aurora.aurora_was.admin.dto.req.CreateLessonReq;
+import com.aurora.aurora_was.lesson.dto.res.SearchLessonRes;
 import com.aurora.aurora_was.lesson.entity.Lesson;
 import com.aurora.aurora_was.lesson.repository.LessonRepository;
 import com.aurora.aurora_was.reservation.repository.ReservationRepository;
@@ -24,13 +24,15 @@ public class LessonService {
 
     @Transactional
     public void createLesson(CreateLessonReq createLessonReq) {
-        // 프론트가 보낸 글자(String)를 진짜 시간(LocalDateTime) 객체로 변환!
-        LocalDateTime parsedTime = LocalDateTime.parse(createLessonReq.startTime());
+        // 💡 프론트가 보낸 글자(String)를 진짜 시간 객체로 변환! (endTime 추가)
+        LocalDateTime parsedStartTime = LocalDateTime.parse(createLessonReq.startTime());
+        LocalDateTime parsedEndTime = LocalDateTime.parse(createLessonReq.endTime());
 
         Lesson lesson = Lesson.builder()
                 .title(createLessonReq.title())
                 .instructor(createLessonReq.instructor())
-                .startTime(parsedTime)
+                .startTime(parsedStartTime)
+                .endTime(parsedEndTime) // 💡 엔티티에 저장!
                 .capacity(createLessonReq.capacity())
                 .build();
 
@@ -38,22 +40,26 @@ public class LessonService {
     }
 
     @Transactional(readOnly = true)
-    public List<SearchLessonReq> getLessonsByDate(String dateStr) {
-        LocalDate date = LocalDate.parse(dateStr); // "2026-03-25" 파싱
-        LocalDateTime startOfDay = date.atStartOfDay(); // 00:00:00
-        LocalDateTime endOfDay = date.atTime(LocalTime.MAX); // 23:59:59
+    public List<SearchLessonRes> getLessonsByDate(String dateStr) {
+        LocalDate date = LocalDate.parse(dateStr);
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
 
         List<Lesson> lessons = lessonRepository.findByStartTimeBetween(startOfDay, endOfDay);
 
         return lessons.stream().map(lesson -> {
-            int booked = reservationRepository.countByLesson(lesson); // 이 수업 예약자 수 세기
-            String time = lesson.getStartTime().toLocalTime().toString(); // "19:00"
+            int booked = reservationRepository.countByLesson(lesson);
 
-            return new SearchLessonReq(
+            // 💡 시작 시간과 종료 시간을 각각 "19:00", "19:50" 모양의 글자로 뽑아냅니다!
+            String startTimeStr = lesson.getStartTime().toLocalTime().toString();
+            String endTimeStr = lesson.getEndTime().toLocalTime().toString();
+
+            return new SearchLessonRes(
                     lesson.getId(),
                     lesson.getTitle(),
                     lesson.getInstructor(),
-                    time,
+                    startTimeStr, // 💡 바뀐 이름 적용
+                    endTimeStr,   // 💡 종료 시간 추가
                     lesson.getCapacity(),
                     booked
             );

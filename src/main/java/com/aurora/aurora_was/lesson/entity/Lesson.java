@@ -19,22 +19,18 @@ public class Lesson {
     private Long id;
 
     @Column(nullable = false)
-    private String title; // 수업명 (예: 입문반)
+    private String title;
 
     @Column(nullable = false)
-    private String instructor; // 강사명 (예: 오로라)
+    private String instructor;
 
     @Column(nullable = false)
-    private LocalDateTime startTime; // 수업 시작 시간 (날짜 + 시간)
+    private LocalDateTime startTime;
+
+    // 🚨 수업 종료 시간 추가!
+    @Column(nullable = false)
+    private LocalDateTime endTime;
 
     @Column(nullable = false)
-    private int capacity; // 정원 (예: 8명)
-
-//    @Builder
-//    public Lesson(String title, String instructor, LocalDateTime startTime, int capacity) {
-//        this.title = title;
-//        this.instructor = instructor;
-//        this.startTime = startTime;
-//        this.capacity = capacity;
-//    }
+    private int capacity;
 }

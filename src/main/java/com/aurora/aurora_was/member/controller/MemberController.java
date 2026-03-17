@@ -3,6 +3,7 @@ package com.aurora.aurora_was.member.controller;
 import com.aurora.aurora_was.member.dto.req.LoginReq;
 import com.aurora.aurora_was.member.dto.req.SignupReq;
 import com.aurora.aurora_was.member.entity.Member;
+import com.aurora.aurora_was.member.service.KakaoService;
 import com.aurora.aurora_was.member.service.MemberService;
 import com.aurora.aurora_was.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ public class MemberController {
 
     private final MemberService memberService;
     private final JwtUtil jwtUtil; // 🎟️ 팔찌 발급 기계 장착!
+    private final KakaoService kakaoService;
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody SignupReq signupReq) {
@@ -44,4 +46,10 @@ public class MemberController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/kakao")
+    public ResponseEntity<java.util.Map<String, Object>> kakaoLogin(@RequestParam String code) {
+        return ResponseEntity.ok(kakaoService.kakaoLogin(code));
+    }
+
 }

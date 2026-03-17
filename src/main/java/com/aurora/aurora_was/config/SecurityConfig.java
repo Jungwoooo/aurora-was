@@ -29,7 +29,7 @@ public class SecurityConfig {
                         // 🚨 핵심: 브라우저가 찔러보는 사전 요청(OPTIONS)은 무조건 통과!
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // 회원가입, 로그인은 토큰 없이 통과!
-                        .requestMatchers("/api/member/signup", "/api/member/login", "/api/voucher/**", "/api/lesson/**", "/api/reservation/**").permitAll()
+                        .requestMatchers("/api/admin/**", "/api/member/**", "/api/voucher/**", "/api/lesson/**", "/api/reservation/**").permitAll()
                         // 나머지는 전부 팔찌(토큰) 검사!
                         .anyRequest().authenticated()
                 );

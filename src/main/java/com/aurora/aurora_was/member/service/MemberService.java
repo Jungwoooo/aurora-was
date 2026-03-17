@@ -2,19 +2,25 @@ package com.aurora.aurora_was.member.service;
 
 import com.aurora.aurora_was.member.dto.req.LoginReq;
 import com.aurora.aurora_was.member.dto.req.SignupReq;
+import com.aurora.aurora_was.admin.dto.res.SearchMemberListRes;
 import com.aurora.aurora_was.member.entity.Member;
 import com.aurora.aurora_was.member.repository.MemberRepository;
-import lombok.AllArgsConstructor;
+import com.aurora.aurora_was.voucher.entity.Voucher;
+import com.aurora.aurora_was.voucher.repository.VoucherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final VoucherRepository voucherRepository;
     private final PasswordEncoder passwordEncoder; // 🔒 비밀번호 암호화 기계 장착!
 
     @Transactional
@@ -45,5 +51,24 @@ public class MemberService {
         }
 
         return member;
+    }
+
+    @Transactional(readOnly = true)
+    public List<SearchMemberListRes> getAllMembersWithVoucher() {
+        List<Member> members = memberRepository.findAll();
+
+        return members.stream().map(member -> {
+            // 💡 해당 회원의 수강권을 찾습니다!
+            Optional<Voucher> voucher = voucherRepository.findByMemberId(member.getId());
+
+            // 수강권이 있으면 횟수/날짜를, 없으면 0회/null을 담아줍니다.
+            return new SearchMemberListRes(
+                    member.getId(),
+                    member.getEmail(),
+                    member.getName(),
+                    voucher.map(Voucher::getRemainingCount).orElse(0),
+                    voucher.map(Voucher::getExpiredAt).orElse(null)
+            );
+        }).toList();
     }
 }

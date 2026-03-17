@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDate;
+
 @Entity
 @Getter
 @SuperBuilder
@@ -17,29 +19,38 @@ public class Voucher {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 💡 어떤 회원의 지갑인지 연결! (N:1 관계)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
     @Column(nullable = false)
-    private int remainingCount; // 남은 횟수 (예: 10회)
+    private int remainingCount;
 
-//    @Builder
-//    public Voucher(Member member, int remainingCount) {
-//        this.member = member;
-//        this.remainingCount = remainingCount;
-//    }
+    // 🚨 1. 만료일 컬럼 추가!
+    @Column(nullable = false)
+    private LocalDate expiredAt;
 
-    // 🚀 예약할 때 횟수 1회 차감하는 마법의 버튼!
-    public void deductCount() {
-        if (this.remainingCount <= 0) {
-            throw new IllegalStateException("수강권 횟수가 부족합니다!");
-        }
-        this.remainingCount -= 1;
+    @Builder
+    public Voucher(Member member, int remainingCount, LocalDate expiredAt) {
+        this.member = member;
+        this.remainingCount = remainingCount;
+        this.expiredAt = expiredAt;
     }
 
-    public void addCount(int count) {
+    // 🚨 2. 횟수 추가 + 만료일 덮어쓰기 로직
+    public void addCount(int count, LocalDate newExpiredAt) {
         this.remainingCount += count;
+        this.expiredAt = newExpiredAt; // 원장님 기획대로 새로운 날짜로 덮어씌웁니다!
+    }
+
+    // 🚨 3. 예약할 때 횟수 깎는 로직 (유효기간 검사 추가!)
+    public void deductCount() {
+        if (this.remainingCount <= 0) {
+            throw new IllegalArgumentException("수강권 횟수가 부족합니다.");
+        }
+        if (this.expiredAt.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("수강권 유효기간이 만료되었습니다. 😭");
+        }
+        this.remainingCount--;
     }
 }

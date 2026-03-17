@@ -6,7 +6,13 @@ import com.aurora.aurora_was.reservation.entity.Reservation;
 import com.aurora.aurora_was.reservation.entity.Reservation;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface ReservationRepository extends JpaRepository<com.aurora.aurora_was.reservation.entity.Reservation, Long> {
     int countByLesson(Lesson lesson);
     boolean existsByMemberAndLesson(Member member, Lesson lesson);
+
+    List<Reservation> findByMemberId(Long memberId);
+
+    List<Reservation> findByLesson(Lesson lesson);
 }
