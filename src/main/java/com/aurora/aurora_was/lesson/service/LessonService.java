@@ -1,10 +1,14 @@
 package com.aurora.aurora_was.lesson.service;
 
 import com.aurora.aurora_was.admin.dto.req.CreateLessonReq;
+import com.aurora.aurora_was.admin.dto.req.UpdateLessonReq;
 import com.aurora.aurora_was.lesson.dto.res.SearchLessonRes;
 import com.aurora.aurora_was.lesson.entity.Lesson;
 import com.aurora.aurora_was.lesson.repository.LessonRepository;
+import com.aurora.aurora_was.reservation.entity.Reservation;
 import com.aurora.aurora_was.reservation.repository.ReservationRepository;
+import com.aurora.aurora_was.voucher.entity.Voucher;
+import com.aurora.aurora_was.voucher.repository.VoucherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +25,7 @@ public class LessonService {
 
     private final LessonRepository lessonRepository;
     private final ReservationRepository reservationRepository;
+    private final VoucherRepository voucherRepository;
 
     @Transactional
     public void createLesson(CreateLessonReq createLessonReq) {
@@ -64,5 +69,55 @@ public class LessonService {
                     booked
             );
         }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateLesson(Long id, UpdateLessonReq updateLessonReq) {
+        // 1. 기존 수업 찾기
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("해당 수업을 찾을 수 없습니다."));
+
+        LocalDateTime parsedStartTime = LocalDateTime.parse(updateLessonReq.startTime());
+        LocalDateTime parsedEndTime = LocalDateTime.parse(updateLessonReq.endTime());
+
+        // 2. 내용 바꾸기 (이러면 끝! JPA가 알아서 DB에 UPDATE 쿼리를 날려줍니다)
+        lesson.updateLesson(
+                updateLessonReq.title(),
+                updateLessonReq.instructor(),
+                parsedStartTime,
+                parsedEndTime,
+                updateLessonReq.capacity()
+        );
+    }
+
+    // 🗑️ 수업 삭제 (Soft Delete)
+    @Transactional
+    public void deleteLesson(Long lessonId) {
+        // 1. 수업 조회
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수업입니다."));
+
+        // 2. 이 수업에 걸려있는 예약 목록 조회
+        // 💡 엔티티에 @SQLRestriction("use_yn = 'Y'")가 있어서 취소된 건 알아서 걸러집니다!
+        List<Reservation> reservations = reservationRepository.findByLesson(lesson);
+
+        // 3. 예약 건수만큼 반복하면서 수강권 복구 및 예약 취소
+        for (Reservation reservation : reservations) {
+
+            // 3-1. 예약한 회원의 수강권 조회
+            Voucher voucher = (Voucher) voucherRepository.findByMember(reservation.getMember())
+                    .orElseThrow(() -> new IllegalArgumentException("회원의 수강권 정보를 찾을 수 없습니다."));
+
+            // 3-2. 수강권 횟수 복구 (+1) / 만료일은 기존 만료일 그대로 유지
+            voucher.addCount(1, voucher.getExpiredAt());
+
+            // 3-3. 예약 취소
+            // 💡 @SQLDelete 덕분에 알아서 UPDATE reservation SET use_yn = 'N' 이 날아갑니다.
+            reservationRepository.delete(reservation);
+        }
+
+        // 4. 수업 삭제
+        // 💡 마찬가지로 UPDATE lesson SET use_yn = 'N' 이 날아갑니다.
+        lessonRepository.delete(lesson);
     }
 }

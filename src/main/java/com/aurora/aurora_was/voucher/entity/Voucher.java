@@ -2,18 +2,20 @@ package com.aurora.aurora_was.voucher.entity;
 
 import com.aurora.aurora_was.member.entity.Member;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 
 @Entity
 @Getter
 @SuperBuilder
+@SQLDelete(sql = "UPDATE voucher SET use_yn = 'N' WHERE id = ?")
+@SQLRestriction("use_yn = 'Y'")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Voucher {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,6 +31,16 @@ public class Voucher {
     // 🚨 1. 만료일 컬럼 추가!
     @Column(nullable = false)
     private LocalDate expiredAt;
+
+    @Column(nullable = false, name = "use_yn", length = 1)
+    private String useYn;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.useYn == null) {
+            this.useYn = "Y";
+        }
+    }
 
     @Builder
     public Voucher(Member member, int remainingCount, LocalDate expiredAt) {

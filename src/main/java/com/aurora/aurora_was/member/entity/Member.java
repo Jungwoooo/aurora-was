@@ -3,10 +3,14 @@ package com.aurora.aurora_was.member.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity // 💡 "Spring아, 이 클래스 보고 MySQL에 테이블 좀 만들어줘!" 라는 마법의 주문
 @Getter
 @SuperBuilder
+@SQLDelete(sql = "UPDATE member SET use_yn = 'N' WHERE id = ?")
+@SQLRestriction("use_yn = 'Y'")
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 숨기기 (안전성 UP)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Member {
@@ -29,6 +33,16 @@ public class Member {
 
     @Column(nullable = false)
     private String role;
+
+    @Column(nullable = false, name = "use_yn", length = 1)
+    private String useYn;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.useYn == null) {
+            this.useYn = "Y";
+        }
+    }
 
     // 💡 처음 회원가입 할 때 쓸 조립 설명서 (Builder)
 //    @Builder

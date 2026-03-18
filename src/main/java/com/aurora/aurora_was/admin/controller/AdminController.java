@@ -1,6 +1,7 @@
 package com.aurora.aurora_was.admin.controller;
 
 import com.aurora.aurora_was.admin.dto.req.CreateLessonReq;
+import com.aurora.aurora_was.admin.dto.req.UpdateLessonReq;
 import com.aurora.aurora_was.lesson.service.LessonService;
 import com.aurora.aurora_was.admin.dto.res.SearchReservationListRes;
 import com.aurora.aurora_was.admin.dto.res.SearchTodayReservationRes;
@@ -59,5 +60,19 @@ public class AdminController {
     @GetMapping("/today")
     public ResponseEntity<List<SearchTodayReservationRes>> getDailySchedule(@RequestParam String date) {
         return ResponseEntity.ok(reservationService.getDailySchedule(date));
+    }
+
+    // ✏️ 수업 수정 API (PUT 또는 PATCH 사용)
+    @PutMapping("/lesson/{id}")
+    public ResponseEntity<String> updateLesson(@PathVariable Long id, @RequestBody UpdateLessonReq updateLessonReq) {
+        lessonService.updateLesson(id, updateLessonReq);
+        return ResponseEntity.ok("수업이 성공적으로 수정되었습니다.");
+    }
+
+    // 🗑️ 수업 삭제 API
+    @DeleteMapping("/lesson/{id}")
+    public ResponseEntity<String> deleteLesson(@PathVariable Long id) {
+        lessonService.deleteLesson(id);
+        return ResponseEntity.ok("수업이 삭제되었습니다.");
     }
 }
