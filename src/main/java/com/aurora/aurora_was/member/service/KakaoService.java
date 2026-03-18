@@ -87,7 +87,7 @@ public class KakaoService {
                         .email(email)       // 💡 kakao_12345678@aurora.com 형태로 저장됨!
                         .password("KAKAO_LOGIN_USER")
                         .name(nickname)     // 💡 카카오톡 이름으로 저장됨!
-                        .role("USER")
+                        .role("user")
                         .phone("010-0000-0000")
                         .build();
                 member = memberRepository.save(member);
