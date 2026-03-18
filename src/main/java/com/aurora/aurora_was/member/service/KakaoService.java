@@ -11,18 +11,14 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
 import org.springframework.http.HttpHeaders;
 
 import java.util.Map;
 import java.util.Optional;
-
-
 
 @Service
 @RequiredArgsConstructor
@@ -35,11 +31,9 @@ public class KakaoService {
     private String kakaoRedirectUri;
 
     private final MemberRepository memberRepository;
-    private final JwtUtil jwtUtil; // 💡 팔찌 공장 주입!
+    private final JwtUtil jwtUtil;
 
-    // 🚨 원장님의 카카오 대표 REST API 키 입력!
-    private final String KAKAO_REST_API_KEY = kakaoRestApiKey;
-    private final String REDIRECT_URI = kakaoRedirectUri;
+    // 🚨 문제가 되던 final 변수들은 싹 지웠습니다!
 
     public Map<String, Object> kakaoLogin(String code) {
         RestTemplate restTemplate = new RestTemplate();
@@ -52,8 +46,9 @@ public class KakaoService {
 
             MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
             tokenParams.add("grant_type", "authorization_code");
-            tokenParams.add("client_id", KAKAO_REST_API_KEY);
-            tokenParams.add("redirect_uri", REDIRECT_URI);
+            // 💡 여기서 바로 @Value 변수(kakaoRestApiKey)를 꺼내 씁니다!
+            tokenParams.add("client_id", kakaoRestApiKey);
+            tokenParams.add("redirect_uri", kakaoRedirectUri);
             tokenParams.add("code", code);
 
             HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
@@ -74,21 +69,28 @@ public class KakaoService {
 
             JsonNode profileNode = objectMapper.readTree(profileResponse.getBody());
 
-            // 이름과 이메일 추출!
-            String nickname = profileNode.get("properties").get("nickname").asText();
-            String email = profileNode.get("kakao_account").get("email").asText();
+            // 🛡️ 1. 닉네임 꺼내기 (이제 필수 동의 했으니 무조건 들어옵니다!)
+            String nickname = "오로라회원"; // 혹시 모를 기본값
+            if (profileNode.has("properties") && profileNode.get("properties").has("nickname")) {
+                nickname = profileNode.get("properties").get("nickname").asText();
+            }
+
+            // 🛡️ 2. 이메일 대신 카카오 고유 ID로 우리만의 이메일 만들기! (권한 없음 완벽 해결)
+            String kakaoId = profileNode.get("id").asText();
+            String email = "kakao_" + kakaoId + "@aurora.com";
 
             // 3. 우리 DB에 있는지 확인하고, 없으면 자동 회원가입!
             Optional<Member> optionalMember = memberRepository.findByEmail(email);
             Member member;
             if (optionalMember.isEmpty()) {
                 member = Member.builder()
-                        .email(email)
+                        .email(email)       // 💡 kakao_12345678@aurora.com 형태로 저장됨!
                         .password("KAKAO_LOGIN_USER")
-                        .name(nickname)
+                        .name(nickname)     // 💡 카카오톡 이름으로 저장됨!
                         .role("USER")
+                        .phone("010-0000-0000")
                         .build();
-                member = memberRepository.save(member); // 💡 저장 후 member 객체 갱신 (ID를 얻기 위해)
+                member = memberRepository.save(member);
             } else {
                 member = optionalMember.get();
             }
@@ -100,9 +102,9 @@ public class KakaoService {
             result.put("id", member.getId());
             result.put("name", member.getName());
             result.put("role", member.getRole());
-            result.put("accessToken", token); // 프론트가 기다리는 이름!
+            result.put("accessToken", token);
 
-            return result; // 🎁 포장된 상자 통째로 반환!
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("카카오 로그인 중 서버 에러 발생!");
