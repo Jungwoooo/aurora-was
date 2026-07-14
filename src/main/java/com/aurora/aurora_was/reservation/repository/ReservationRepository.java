@@ -15,4 +15,6 @@ public interface ReservationRepository extends JpaRepository<com.aurora.aurora_w
     List<Reservation> findByMemberId(Long memberId);
 
     List<Reservation> findByLesson(Lesson lesson);
+
+    int countByLessonId(Long id);
 }

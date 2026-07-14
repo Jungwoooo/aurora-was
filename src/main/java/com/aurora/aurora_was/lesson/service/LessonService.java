@@ -2,6 +2,7 @@ package com.aurora.aurora_was.lesson.service;
 
 import com.aurora.aurora_was.admin.dto.req.CreateLessonReq;
 import com.aurora.aurora_was.admin.dto.req.UpdateLessonReq;
+import com.aurora.aurora_was.lesson.dto.res.LessonListRes;
 import com.aurora.aurora_was.lesson.dto.res.SearchLessonRes;
 import com.aurora.aurora_was.lesson.entity.Lesson;
 import com.aurora.aurora_was.lesson.repository.LessonRepository;
@@ -119,5 +120,33 @@ public class LessonService {
         // 4. 수업 삭제
         // 💡 마찬가지로 UPDATE lesson SET use_yn = 'N' 이 날아갑니다.
         lessonRepository.delete(lesson);
+    }
+
+    @Transactional
+    public void copyCreateLessons(List<CreateLessonReq> reqList) {
+        // 1. 프론트에서 넘어온 DTO 리스트를 Lesson 엔티티 리스트로 변환
+        List<Lesson> newLessons = reqList.stream()
+                .map(req -> Lesson.builder()
+                        .title(req.title())
+                        .instructor(req.instructor())
+                        .startTime(LocalDateTime.parse(req.startTime()))
+                        .endTime(LocalDateTime.parse(req.endTime()))
+                        .capacity(req.capacity())
+                        .build())
+                .collect(Collectors.toList());
+
+        // 2. saveAll()을 사용해 DB에 일괄(Batch) 저장 (for문 save보다 훨씬 빠릅니다!)
+        lessonRepository.saveAll(newLessons);
+    }
+
+    // 🚀 기간별 수업 조회 서비스 (record 생성자 방식 적용)
+    @Transactional(readOnly = true)
+    public List<LessonListRes> getLessonsInRange(LocalDate startDate, LocalDate endDate) {
+
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+
+        // 복잡한 반복문 없이, 쿼리 1방에 모든 데이터를 DTO로 깔끔하게 받아옵니다.
+        return lessonRepository.findLessonsWithReservationCount(startDateTime, endDateTime);
     }
 }

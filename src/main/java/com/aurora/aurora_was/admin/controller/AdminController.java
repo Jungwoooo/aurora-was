@@ -2,6 +2,7 @@ package com.aurora.aurora_was.admin.controller;
 
 import com.aurora.aurora_was.admin.dto.req.CreateLessonReq;
 import com.aurora.aurora_was.admin.dto.req.UpdateLessonReq;
+import com.aurora.aurora_was.lesson.dto.res.LessonListRes;
 import com.aurora.aurora_was.lesson.service.LessonService;
 import com.aurora.aurora_was.admin.dto.res.SearchReservationListRes;
 import com.aurora.aurora_was.admin.dto.res.SearchTodayReservationRes;
@@ -14,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -74,5 +77,28 @@ public class AdminController {
     public ResponseEntity<String> deleteLesson(@PathVariable Long id) {
         lessonService.deleteLesson(id);
         return ResponseEntity.ok("수업이 삭제되었습니다.");
+    }
+
+    @PostMapping("/lesson/copy-create")
+    public ResponseEntity<?> copyCreateLessons(@RequestBody List<CreateLessonReq> reqList) {
+
+        // 서비스의 대량 등록 로직 호출
+        lessonService.copyCreateLessons(reqList);
+
+        // 성공 메시지와 함께 몇 개가 등록되었는지 응답
+        return ResponseEntity.ok(Map.of(
+                "message", reqList.size() + "개의 수업이 성공적으로 복사되었습니다."
+        ));
+    }
+
+    @GetMapping("/lesson/month")
+    public ResponseEntity<List<LessonListRes>> getLessonsInRange(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate) {
+
+        // 프론트에서 ?startDate=2026-06-28&endDate=2026-08-08 형태로 날아오면 찰떡같이 받아줍니다.
+        List<LessonListRes> lessons = lessonService.getLessonsInRange(startDate, endDate);
+
+        return ResponseEntity.ok(lessons);
     }
 }
